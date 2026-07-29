@@ -1,0 +1,5 @@
+# source	destination	fstype	options	dump	pass
+zbamidbar/container-data/nginx/var	/containers/nginx/var	zfs	rw	0	0
+zbamidbar/container-data/nginx/usr-local	/containers/nginx/usr/local	zfs	rw	0	0
+zbamidbar/container-data/nginx/tmp	/containers/nginx/tmp	zfs	rw	0	0
+/zbamidbar/web	/containers/nginx/usr/local/www	nullfs	ro	0	0
