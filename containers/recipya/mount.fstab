@@ -2,4 +2,4 @@
 zbamidbar/container-data/recipya/var	/containers/recipya/var	zfs	rw	0	0
 zbamidbar/container-data/recipya/usr-local	/containers/recipya/usr/local	zfs	rw	0	0
 zbamidbar/container-data/recipya/tmp	/containers/recipya/tmp	zfs	rw	0	0
-/zbamidbar/web	/containers/recipya/usr/local/www	nullfs	rw	0	0
+/container-data/nginx/web	/containers/recipya/usr/local/www	nullfs	rw	0	0

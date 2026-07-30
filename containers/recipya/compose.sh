@@ -1,6 +1,7 @@
 #!/bin/sh
 # compose.sh -- recipe actions for recipya container.
 # Recipya is built from source using Go + npm + templ + task.
+# Runs inside the jail via jexec — no chroot or DESTDIR needed.
 
 RECIPYA_PORT="8078"
 RECIPYA_USER="recipya"
@@ -11,30 +12,27 @@ pre_pkg() {
 }
 
 post_pkg() {
-	local dest="${DESTDIR:-}"
-
 	# Create service user
-	chroot "$dest" pw useradd "$RECIPYA_USER" \
+	pw useradd "$RECIPYA_USER" \
 		-d "$RECIPYA_HOME" -s /usr/sbin/nologin \
 		-c "Recipya Service" 2>/dev/null || true
 
 	# Build from source
-	chroot "$dest" sh -c '
-		export PATH="$PATH:/root/go/bin"
-		cd /tmp
-		git clone https://github.com/reaper47/recipya.git
-		go install github.com/go-task/task/v3/cmd/task@latest
-		go install github.com/a-h/templ/cmd/templ@latest
-		CGO_ENABLED=1 go install -tags extended github.com/gohugoio/hugo@latest
-		cd recipya
-		task build
-		go build -ldflags="-s -w" -o /usr/local/bin/recipya main.go
-	'
-	rm -rf "${dest}/tmp/recipya" "${dest}/root/go"
+	export PATH="$PATH:/root/go/bin"
+	cd /tmp
+	git clone https://github.com/reaper47/recipya.git
+	go install github.com/go-task/task/v3/cmd/task@latest
+	go install github.com/a-h/templ/cmd/templ@latest
+	CGO_ENABLED=1 go install -tags extended github.com/gohugoio/hugo@latest
+	cd recipya
+	task build
+	go build -ldflags="-s -w" -o /usr/local/bin/recipya main.go
+	cd /
+	rm -rf /tmp/recipya /root/go
 
 	# Create config directory and config.json
-	mkdir -p "${dest}${RECIPYA_HOME}/Recipya/Database"
-	cat > "${dest}${RECIPYA_HOME}/Recipya/Database/config.json" <<-CONF
+	mkdir -p "${RECIPYA_HOME}/Recipya/Database"
+	cat > "${RECIPYA_HOME}/Recipya/Database/config.json" <<-CONF
 	{
 	    "server": {
 	        "autologin": false,
@@ -56,10 +54,10 @@ post_pkg() {
 	    }
 	}
 	CONF
-	chroot "$dest" chown -R "${RECIPYA_USER}:${RECIPYA_USER}" "$RECIPYA_HOME"
+	chown -R "${RECIPYA_USER}:${RECIPYA_USER}" "$RECIPYA_HOME"
 
 	# rc.d script
-	cat > "${dest}/usr/local/etc/rc.d/recipya" <<-'RCD'
+	cat > /usr/local/etc/rc.d/recipya <<-'RCD'
 	#!/bin/sh
 
 	# PROVIDE: recipya
@@ -93,14 +91,15 @@ post_pkg() {
 
 	run_rc_command "$1"
 	RCD
-	chmod +x "${dest}/usr/local/etc/rc.d/recipya"
+	chmod +x /usr/local/etc/rc.d/recipya
 
 	# Enable service
-	sysrc -f "${dest}/etc/rc.conf" recipya_enable="YES"
+	sysrc nginx_enable="YES"
+	sysrc recipya_enable="YES"
 
 	# Emplace nginx reverse proxy config into shared www
-	mkdir -p "${dest}/usr/local/www/conf.d"
-	cat > "${dest}/usr/local/www/conf.d/recipya.conf" <<-'NGINX'
+	mkdir -p /usr/local/www/conf.d
+	cat > /usr/local/www/conf.d/recipya.conf <<-'NGINX'
 	server {
 	    listen 80;
 	    server_name recipes.*;
