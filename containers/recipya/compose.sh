@@ -31,8 +31,8 @@ post_pkg() {
 	rm -rf /tmp/recipya /root/go
 
 	# Create config directory and config.json
-	mkdir -p "${RECIPYA_HOME}/Recipya/Database"
-	cat > "${RECIPYA_HOME}/Recipya/Database/config.json" <<-CONF
+	mkdir -p "${RECIPYA_HOME}/Recipya"
+	cat > "${RECIPYA_HOME}/Recipya/config.json" <<-CONF
 	{
 	    "server": {
 	        "autologin": false,
@@ -40,16 +40,18 @@ post_pkg() {
 	        "isProduction": true,
 	        "noSignups": false,
 	        "port": ${RECIPYA_PORT},
-	        "url": ""
+	        "url": "http://0.0.0.0"
 	    },
 	    "email": {
 	        "from": "",
-	        "sendGridAPIKey": ""
+	        "host": "",
+	        "username": "",
+	        "password": ""
 	    },
 	    "integrations": {
 	        "azureDocumentIntelligence": {
-	            "key": "",
-	            "endpoint": ""
+	            "endpoint": "",
+	            "key": ""
 	        }
 	    }
 	}
